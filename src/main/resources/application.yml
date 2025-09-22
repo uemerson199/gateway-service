@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+
+            - id: patients_route
+
+              uri: http://patients-service:8081
+              predicates:
+                - Path=/patients/**
+
+
+            - id: doctors_route
+
+              uri: http://scheduling-service:8082
+              predicates:
+                - Path=/doctors/**
+
+
+            - id: appointments_route
+
+              uri: http://scheduling-service:8082
+              predicates:
+                - Path=/appointments/**
