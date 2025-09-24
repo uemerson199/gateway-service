@@ -10,22 +10,31 @@ spring:
         webflux:
           routes:
 
-            - id: patients_route
+            - id: auth_route
+              uri: http://auth-service:8084
+              predicates:
+                - Path=/auth/**
 
+
+            - id: patients_route
               uri: http://patients-service:8081
               predicates:
                 - Path=/patients/**
+              filters:
+                - AuthenticationFilter
 
 
             - id: doctors_route
-
               uri: http://scheduling-service:8082
               predicates:
                 - Path=/doctors/**
+              filters:
+                - AuthenticationFilter
 
 
             - id: appointments_route
-
               uri: http://scheduling-service:8082
               predicates:
                 - Path=/appointments/**
+              filters:
+                - AuthenticationFilter
