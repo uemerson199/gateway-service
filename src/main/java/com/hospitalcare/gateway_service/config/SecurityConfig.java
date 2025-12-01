@@ -18,11 +18,11 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // 1. Habilita o CORS
-                .csrf(ServerHttpSecurity.CsrfSpec::disable) // 2. Desabilita o CSRF (Causa comum do erro 403)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers("/auth/**").permitAll() // 3. Permite acesso público a todas as rotas /auth/**
-                        .anyExchange().authenticated() // 4. Exige autenticação para todas as outras rotas
+                        .pathMatchers("/auth/**").permitAll()
+                        .anyExchange().permitAll()
                 )
                 .build();
     }
