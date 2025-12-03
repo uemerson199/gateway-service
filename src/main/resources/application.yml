@@ -20,13 +20,16 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
 
-
       routes:
-
         - id: auth_route
           uri: http://auth-service:8083
           predicates:
             - Path=/auth/**
+          filters:
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY, GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
 
         - id: patients_route
           uri: http://patients-service:8081
@@ -34,6 +37,10 @@ spring:
             - Path=/patients/**
           filters:
             - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: patientsCircuitBreaker
+                fallbackUri: forward:/fallback/patients
 
         - id: doctors_route
           uri: http://scheduling-service:8082
@@ -41,6 +48,10 @@ spring:
             - Path=/doctors/**
           filters:
             - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: schedulingCircuitBreaker
+                fallbackUri: forward:/fallback/scheduling
 
         - id: appointments_route
           uri: http://scheduling-service:8082
@@ -48,3 +59,45 @@ spring:
             - Path=/appointments/**
           filters:
             - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: schedulingCircuitBreaker
+                fallbackUri: forward:/fallback/scheduling
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      patientsCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 3
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+      schedulingCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 3
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+  timelimiter:
+    instances:
+      patientsCircuitBreaker:
+        timeoutDuration: 3s
+      schedulingCircuitBreaker:
+        timeoutDuration: 3s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
