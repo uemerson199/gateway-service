@@ -64,6 +64,17 @@ spring:
                 name: schedulingCircuitBreaker
                 fallbackUri: forward:/fallback/scheduling
 
+        - id: inventory_route
+          uri: http://inventory-service:8086
+          predicates:
+            - Path=/inventory/**
+          filters:
+            - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: inventoryCircuitBreaker
+                fallbackUri: forward:/fallback/inventory
+
 resilience4j:
   circuitbreaker:
     instances:
@@ -83,11 +94,20 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         waitDurationInOpenState: 5s
         failureRateThreshold: 50
+      inventoryCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 3
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
   timelimiter:
     instances:
       patientsCircuitBreaker:
         timeoutDuration: 3s
       schedulingCircuitBreaker:
+        timeoutDuration: 3s
+      inventoryCircuitBreaker:
         timeoutDuration: 3s
 
 management:
